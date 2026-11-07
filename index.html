@@ -435,4 +435,362 @@
     </div>
 
     <!-- 9. HOST SCOREBOARD BETWEEN QUESTIONS -->
-    <div id="screen-host-
+    <div id="screen-host-scoreboard" class="screen">
+        <h1>Leaderboard</h1>
+        <p class="subtitle">Current Standings</p>
+
+        <div class="leaderboard-list" id="scoreboard-list">
+            <!-- Dynamically populated -->
+        </div>
+
+        <button class="btn" id="next-q-btn" onclick="nextQuestion()">Next Question</button>
+    </div>
+
+    <!-- 10. FINAL PODIUM / GAME OVER -->
+    <div id="screen-game-over" class="screen">
+        <h1>🏆 Game Over 🏆</h1>
+        <p class="subtitle">Final Winners</p>
+
+        <div class="leaderboard-list" id="final-scoreboard-list">
+            <!-- Dynamically populated -->
+        </div>
+
+        <button class="btn" onclick="location.reload()">Play Again</button>
+    </div>
+
+    <!-- Firebase Realtime Database Client Setup -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, get, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // Your exact Firebase project config
+        const firebaseConfig = {
+            apiKey: "AIzaSyCZpA12gL6VpX8LGA0H9SST7AV3XQL8irE",
+            authDomain: "bollywood-quiz-7c5d9.firebaseapp.com",
+            databaseURL: "https://bollywood-quiz-7c5d9-default-rtdb.firebaseio.com",
+            projectId: "bollywood-quiz-7c5d9",
+            storageBucket: "bollywood-quiz-7c5d9.firebasestorage.app",
+            messagingSenderId: "596074047760",
+            appId: "1:596074047760:web:3c4208e7336171fec91d95",
+            measurementId: "G-PK1BGDB4DL"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Make database functions accessible globally to quiz logic
+        window.db = db;
+        window.dbRef = ref;
+        window.dbSet = set;
+        window.dbGet = get;
+        window.dbOnValue = onValue;
+        window.dbUpdate = update;
+        window.dbRemove = remove;
+    </script>
+
+    <!-- Quiz Logic Script -->
+    <script>
+        // Question Database (30+ Bollywood Questions across 6 categories)
+        const QUESTION_DATABASE = [
+            // Category 1: Guess the Lyrics
+            { cat: "Guess the Lyrics", q: "Complete the lyric: 'Tujhe dekha toh yeh jaana sanam...'", options: ["Pyaar hota hai deewana sanam", "Teri baahon mein mar jaayein hum", "Dil ne phir se kiya yaad sanam", "Aankhon se door jaana sanam"], correct: 0 },
+            { cat: "Guess the Lyrics", q: "Complete the lyric: 'Chaiyya Chaiyya... Paon janat chale...'", options: ["Chal chaiyya chaiyya", "Pahado se girke", "Sufi ke sang sang", "Sar pe chaanv chale"], correct: 3 },
+            { cat: "Guess the Lyrics", q: "Complete the lyric: 'Tumhi ho bandhu, sakha tumhi...'", options: ["Raat humari toh", "Har pal har chin", "Tumhi ho mera pyar", "Dil ki kahani"], correct: 0 },
+            { cat: "Guess the Lyrics", q: "Complete the lyric: 'Kabira maan jaa, Re Kabira maan jaa...'", options: ["Aaja tujhko pukare teri chhaon", "Kaisa tu hai nirmohi kaisa harjaaee", "Dil ki baatein tu jaane na", "Pankh laga ke udd jaa"], correct: 1 },
+
+            // Category 2: Complete the Movie Title
+            { cat: "Complete the Title", q: "Complete the title: 'Dilwale Dulhania...'", options: ["Le Jayenge", "Pyaar Karenge", "Ghar Layenge", "Dekhte Reh Jayenge"], correct: 0 },
+            { cat: "Complete the Title", q: "Complete the title: 'Zindagi Na Milegi...'", options: ["Dobara", "Wapas", "Kabhie", "Dubara Dobara"], correct: 0 },
+            { cat: "Complete the Title", q: "Complete the title: 'Kabhi Khushi Kabhie...'", options: ["Hansi", "Gham", "Yaadein", "Khushi"], correct: 1 },
+            { cat: "Complete the Title", q: "Complete the title: 'Ajab Prem Ki...'", options: ["Ghazab Kahaani", "Anokhi Dastaan", "Meethi Prem Kahaani", "Pyaar Bhari Kahani"], correct: 0 },
+
+            // Category 3: Finish the Famous Line / Dialogue
+            { cat: "Finish Famous Line", q: "Finish the dialogue: 'Kitne aadmi the...'", options: ["Sardaar?", "Kalia?", "Samba?", "Raju?"], correct: 2 },
+            { cat: "Finish Famous Line", q: "Finish the dialogue: 'Mogambo...'", options: ["Khush Hua!", "Pareshaan Hua!", "Jeet Gaya!", "Aa Gaya!"], correct: 0 },
+            { cat: "Finish Famous Line", q: "Finish the dialogue: 'Babu Moshai, zindagi badi honi chahiye...'", options: ["Lambi nahi!", "Meethi nahi!", "Achhi nahi!", "Khush nahi!"], correct: 0 },
+            { cat: "Finish Famous Line", q: "Finish the dialogue: 'Don ko pakadna mushkil hi nahi...'", options: ["Bekaar hai", "Naamumkin hai", "Khatarnaak hai", "Sahi nahi hai"], correct: 1 },
+
+            // Category 4: Guess the Movie from a Bad Plot Description
+            { cat: "Bad Plot Description", q: "An architect fakes a college degree, annoys his principal, and runs away to Ladakh.", options: ["3 Idiots", "Chhichhore", "Main Hoon Na", "Jaane Tu Ya Jaane Na"], correct: 0 },
+            { cat: "Bad Plot Description", q: "A rich guy falls in love in Europe, but has to ask her dad permission while pretending to be a guest at her wedding.", options: ["DDLJ", "Jab We Met", "Pardes", "Kal Ho Naa Ho"], correct: 0 },
+            { cat: "Bad Plot Description", q: "A girl misses her train, gets stuck with an annoying talkative guy, and accidentally fixes her love life.", options: ["Jab We Met", "Cocktail", "Tamasha", "Yeh Jawaani Hai Deewani"], correct: 0 },
+
+            // Category 5: Guess the Described Scene
+            { cat: "Guess the Scene", q: "Which scene features a red car, water pistols, and a holi song celebrating 'Balam Pichkari'?", options: ["Yeh Jawaani Hai Deewani", "Raanjhanaa", "Zindagi Na Milegi Dobara", "Badrinath Ki Dulhania"], correct: 0 },
+            { cat: "Guess the Scene", q: "Which movie climax takes place on a railway platform where the father lets go of his daughter's hand?", options: ["DDLJ", "Kuch Kuch Hota Hai", "Chennai Express", "Veer-Zaara"], correct: 0 },
+            { cat: "Guess the Scene", q: "In which film does a ghost play chess and fall in love with a newlywed bride played by Rani Mukerji?", options: ["Paheli", "Bhool Bhulaiyaa", "Stree", "Tumbbad"], correct: 0 },
+
+            // Category 6: Guess Actor/Actress based on Movies
+            { cat: "Guess Actor/Actress", q: "Who acted in: 'Om Shanti Om', 'Padmaavat', 'Piku', and 'Cocktail'?", options: ["Deepika Padukone", "Priyanka Chopra", "Katrina Kaif", "Anushka Sharma"], correct: 0 },
+            { cat: "Guess Actor/Actress", q: "Who acted in: 'Dangal', 'PK', '3 Idiots', and 'Lagaan'?", options: ["Aamir Khan", "Shah Rukh Khan", "Salman Khan", "Akshay Kumar"], correct: 0 },
+            { cat: "Guess Actor/Actress", q: "Who acted in: 'Gully Boy', 'Gangubai Kathiawadi', and 'Highway'?", options: ["Alia Bhatt", "Kriti Sanon", "Shraddha Kapoor", "Sara Ali Khan"], correct: 0 }
+        ];
+
+        let currentRoomPin = null;
+        let isHost = false;
+        let selectedCategories = [];
+        let playerNickname = "";
+        let currentQuestions = [];
+        let currentQIndex = 0;
+        let timerInterval = null;
+        let questionStartTime = 0;
+        let playerScore = 0;
+
+        // Sound Effects Synthesizer
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playTone(freq, type, duration) {
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.value = freq;
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e) {}
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function goToHostSetup() {
+            const categories = [...new Set(QUESTION_DATABASE.map(q => q.cat))];
+            const container = document.getElementById('category-selector');
+            container.innerHTML = `
+                <div class="cat-card selected" onclick="toggleCategory('ALL', this)">All Categories (Mixed)</div>
+            ` + categories.map(c => `
+                <div class="cat-card" onclick="toggleCategory('${c}', this)">${c}</div>
+            `).join('');
+            selectedCategories = ['ALL'];
+            showScreen('screen-host-category');
+        }
+
+        function toggleCategory(cat, el) {
+            if (cat === 'ALL') {
+                selectedCategories = ['ALL'];
+                document.querySelectorAll('.cat-card').forEach(c => c.classList.remove('selected'));
+                el.classList.add('selected');
+                return;
+            }
+            
+            const allIndex = selectedCategories.indexOf('ALL');
+            if (allIndex > -1) selectedCategories.splice(allIndex, 1);
+            document.querySelectorAll('.cat-card')[0].classList.remove('selected');
+
+            const index = selectedCategories.indexOf(cat);
+            if (index > -1) {
+                selectedCategories.splice(index, 1);
+                el.classList.remove('selected');
+            } else {
+                selectedCategories.push(cat);
+                el.classList.add('selected');
+            }
+
+            if (selectedCategories.length === 0) {
+                selectedCategories = ['ALL'];
+                document.querySelectorAll('.cat-card')[0].classList.add('selected');
+            }
+        }
+
+        function goToPlayerJoin() {
+            showScreen('screen-player-join');
+        }
+
+        // Host Logic: Create Game Room on Firebase
+        function createGameRoom() {
+            isHost = true;
+            currentRoomPin = Math.floor(100000 + Math.random() * 900000).toString();
+            document.getElementById('host-pin-display').innerText = currentRoomPin;
+
+            // Filter Questions
+            if (selectedCategories.includes('ALL')) {
+                currentQuestions = [...QUESTION_DATABASE].sort(() => 0.5 - Math.random());
+            } else {
+                currentQuestions = QUESTION_DATABASE.filter(q => selectedCategories.includes(q.cat)).sort(() => 0.5 - Math.random());
+            }
+
+            const roomRef = window.dbRef(window.db, 'rooms/' + currentRoomPin);
+            window.dbSet(roomRef, {
+                state: 'LOBBY',
+                questions: currentQuestions,
+                currentQ: 0,
+                players: {}
+            });
+
+            // Listen for players joining
+            window.dbOnValue(window.dbRef(window.db, `rooms/${currentRoomPin}/players`), (snapshot) => {
+                const players = snapshot.val() || {};
+                const list = document.getElementById('host-player-list');
+                list.innerHTML = Object.keys(players).map(p => `<div class="player-chip">${p}</div>`).join('');
+            });
+
+            showScreen('screen-host-lobby');
+        }
+
+        // Player Logic: Join Room
+        function joinGameRoom() {
+            const pin = document.getElementById('player-pin-input').value.trim();
+            const name = document.getElementById('player-name-input').value.trim();
+
+            if (!pin || !name) {
+                alert("Please enter both PIN and Nickname!");
+                return;
+            }
+
+            currentRoomPin = pin;
+            playerNickname = name;
+
+            const playerRef = window.dbRef(window.db, `rooms/${pin}/players/${name}`);
+            window.dbSet(playerRef, { score: 0, lastAnswer: -1 });
+
+            document.getElementById('player-welcome-name').innerText = `Welcome ${name}!`;
+            showScreen('screen-player-lobby');
+
+            // Listen to room state updates from Host
+            window.dbOnValue(window.dbRef(window.db, `rooms/${pin}`), (snapshot) => {
+                const data = snapshot.val();
+                if (!data) return;
+
+                if (data.state === 'QUESTION') {
+                    const q = data.questions[data.currentQ];
+                    document.getElementById('player-question-text').innerText = q.q;
+                    document.getElementById('p-ans-0').innerText = q.options[0];
+                    document.getElementById('p-ans-1').innerText = q.options[1];
+                    document.getElementById('p-ans-2').innerText = q.options[2];
+                    document.getElementById('p-ans-3').innerText = q.options[3];
+                    showScreen('screen-player-question');
+                    startTimer(15, 'player-timer');
+                } else if (data.state === 'SCOREBOARD') {
+                    showScreen('screen-player-result');
+                } else if (data.state === 'GAMEOVER') {
+                    showScreen('screen-game-over');
+                }
+            });
+        }
+
+        function startHostGame() {
+            currentQIndex = 0;
+            loadHostQuestion();
+        }
+
+        function loadHostQuestion() {
+            const q = currentQuestions[currentQIndex];
+            document.getElementById('host-q-counter').innerText = `Question ${currentQIndex + 1}/${currentQuestions.length}`;
+            document.getElementById('host-question-text').innerText = q.q;
+            document.getElementById('h-ans-0').innerText = q.options[0];
+            document.getElementById('h-ans-1').innerText = q.options[1];
+            document.getElementById('h-ans-2').innerText = q.options[2];
+            document.getElementById('h-ans-3').innerText = q.options[3];
+
+            window.dbUpdate(window.dbRef(window.db, `rooms/${currentRoomPin}`), {
+                state: 'QUESTION',
+                currentQ: currentQIndex
+            });
+
+            // Reset player answer states
+            window.dbGet(window.dbRef(window.db, `rooms/${currentRoomPin}/players`)).then(snap => {
+                const players = snap.val() || {};
+                Object.keys(players).forEach(p => {
+                    window.dbUpdate(window.dbRef(window.db, `rooms/${currentRoomPin}/players/${p}`), { lastAnswer: -1 });
+                });
+            });
+
+            showScreen('screen-host-question');
+            questionStartTime = Date.now();
+            startTimer(15, 'host-timer', () => {
+                showScoreboard();
+            });
+        }
+
+        function startTimer(seconds, elementId, onComplete) {
+            clearInterval(timerInterval);
+            let timeLeft = seconds;
+            document.getElementById(elementId).innerText = timeLeft;
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById(elementId).innerText = timeLeft;
+                if (timeLeft <= 3 && timeLeft > 0) playTone(600, 'sine', 0.1);
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    if (onComplete) onComplete();
+                }
+            }, 1000);
+        }
+
+        function submitAnswer(idx) {
+            playTone(800, 'triangle', 0.15);
+            const timeTaken = (Date.now() - questionStartTime) / 1000;
+            const points = Math.max(200, Math.round(1000 - (timeTaken * 40)));
+
+            const currentQ = currentQuestions[currentQIndex];
+            if (idx === currentQ.correct) {
+                playerScore += points;
+                document.getElementById('result-header').innerText = "CORRECT! 🎉";
+                document.getElementById('result-subheader').innerText = `+${points} Pts`;
+                playTone(587.33, 'sine', 0.2);
+            } else {
+                document.getElementById('result-header').innerText = "INCORRECT ❌";
+                document.getElementById('result-subheader').innerText = "+0 Pts";
+                playTone(200, 'sawtooth', 0.3);
+            }
+            document.getElementById('player-score-display').innerText = `Score: ${playerScore}`;
+
+            window.dbUpdate(window.dbRef(window.db, `rooms/${currentRoomPin}/players/${playerNickname}`), {
+                score: playerScore,
+                lastAnswer: idx
+            });
+
+            showScreen('screen-player-result');
+        }
+
+        function showScoreboard() {
+            window.dbUpdate(window.dbRef(window.db, `rooms/${currentRoomPin}`), { state: 'SCOREBOARD' });
+
+            window.dbGet(window.dbRef(window.db, `rooms/${currentRoomPin}/players`)).then(snapshot => {
+                const players = snapshot.val() || {};
+                const sorted = Object.entries(players).sort((a,b) => b[1].score - a[1].score);
+
+                const list = document.getElementById('scoreboard-list');
+                list.innerHTML = sorted.map(([name, data], idx) => `
+                    <div class="leaderboard-item">
+                        <span>#${idx+1} ${name}</span>
+                        <span>${data.score} Pts</span>
+                    </div>
+                `).join('');
+
+                showScreen('screen-host-scoreboard');
+            });
+        }
+
+        function nextQuestion() {
+            currentQIndex++;
+            if (currentQIndex < currentQuestions.length) {
+                loadHostQuestion();
+            } else {
+                window.dbUpdate(window.dbRef(window.db, `rooms/${currentRoomPin}`), { state: 'GAMEOVER' });
+                window.dbGet(window.dbRef(window.db, `rooms/${currentRoomPin}/players`)).then(snapshot => {
+                    const players = snapshot.val() || {};
+                    const sorted = Object.entries(players).sort((a,b) => b[1].score - a[1].score);
+
+                    const list = document.getElementById('final-scoreboard-list');
+                    list.innerHTML = sorted.map(([name, data], idx) => `
+                        <div class="leaderboard-item">
+                            <span>#${idx+1} ${name}</span>
+                            <span>${data.score} Pts</span>
+                        </div>
+                    `).join('');
+
+                    showScreen('screen-game-over');
+                    confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+                });
+            }
+        }
+    </script>
+</body>
+</html>
