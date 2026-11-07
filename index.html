@@ -3,41 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bollywood Dhamaka - Multiplayer Kahoot Quiz</title>
-    <!-- Tailwind CSS -->
+    <title>Bollywood Kahoot Dhamaka - Live Multiplayer</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Poppins:wght@400;600;800;900&display=swap" rel="stylesheet">
     
-    <!-- Firebase JS SDK (v11.6.1) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getDatabase, ref, set, update, onValue, remove, get } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
-
-        // Firebase Configuration (Standard Public Demo Config with fallback)
-        const firebaseConfig = typeof __firebase_config !== 'undefined' 
-            ? JSON.parse(__firebase_config) 
-            : {
-                apiKey: "AIzaSyDemoConfigKeyForBollywoodQuizApp123",
-                authDomain: "bollywood-kahoot-quiz.firebaseapp.com",
-                databaseURL: "https://bollywood-kahoot-quiz-default-rtdb.firebaseio.com",
-                projectId: "bollywood-kahoot-quiz",
-                storageBucket: "bollywood-kahoot-quiz.appspot.com",
-                messagingSenderId: "1234567890",
-                appId: "1:1234567890:web:demoapp123"
-            };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getDatabase(app);
-
-        // Expose Firebase tools globally for app logic
-        window.fb = { auth, db, ref, set, update, onValue, remove, get, signInAnonymously, onAuthStateChanged };
-    </script>
-
     <script>
         tailwind.config = {
             theme: {
@@ -68,15 +41,16 @@
         }
 
         .kahoot-btn {
-            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.15s ease;
+            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.15s ease, background-color 0.15s;
             box-shadow: 0 8px 0 rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.2);
+            cursor: pointer;
         }
         .kahoot-btn:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 0 rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 11px 0 rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.3);
         }
         .kahoot-btn:active {
-            transform: translateY(4px);
+            transform: translateY(3px);
             box-shadow: 0 2px 0 rgba(0,0,0,0.3);
         }
 
@@ -87,25 +61,25 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 50;
+            z-index: 60;
         }
     </style>
 </head>
 <body class="font-sans antialiased text-white flex flex-col justify-between min-h-screen relative">
     
-    <!-- Audio Controls & Global Header -->
+    <!-- Header Controls -->
     <header class="w-full p-4 flex justify-between items-center z-20">
-        <div class="flex items-center space-x-3 cursor-pointer" onclick="resetToHome()">
-            <div class="bg-yellow-400 text-purple-900 font-black px-3 py-1 text-2xl rounded-lg shadow-lg tracking-wider">
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="window.resetToHome()">
+            <div class="bg-yellow-400 text-purple-950 font-black px-3 py-1 text-xl sm:text-2xl rounded-xl shadow-lg tracking-wider">
                 🎬 BOLLYWOOD
             </div>
-            <span class="font-bold text-xl tracking-tight hidden sm:inline">LIVE KAHOOT</span>
+            <span class="font-black text-xl tracking-tight hidden sm:inline text-yellow-300">LIVE KAHOOT</span>
         </div>
         <div class="flex items-center space-x-3">
-            <span id="pin-badge" class="hidden bg-white/20 px-3 py-1.5 rounded-full font-bold text-sm tracking-wider text-yellow-300 border border-white/20">
+            <span id="pin-badge" class="hidden bg-white/20 px-4 py-1.5 rounded-full font-extrabold text-sm tracking-wider text-yellow-300 border border-white/20 shadow-md">
                 PIN: <span id="current-pin-display">------</span>
             </span>
-            <button id="sound-toggle" onclick="toggleSound()" class="bg-white/10 hover:bg-white/20 p-3 rounded-full backdrop-blur-md transition-all text-xl w-12 h-12 flex items-center justify-center border border-white/20">
+            <button id="sound-toggle" onclick="window.toggleSound()" class="bg-white/10 hover:bg-white/20 p-3 rounded-full backdrop-blur-md transition-all text-xl w-12 h-12 flex items-center justify-center border border-white/20">
                 <i class="fas fa-volume-up" id="sound-icon"></i>
             </button>
         </div>
@@ -113,10 +87,10 @@
 
     <canvas id="confetti-canvas"></canvas>
 
-    <!-- MAIN CONTAINER FOR SCREENS -->
-    <main class="container mx-auto max-w-4xl px-4 py-2 flex-grow flex flex-col justify-center items-center z-10">
+    <!-- MAIN CONTAINER -->
+    <main class="container mx-auto max-w-4xl px-4 py-4 flex-grow flex flex-col justify-center items-center z-10">
 
-        <!-- 1. HOME: MODE SELECTION (HOST vs JOIN) -->
+        <!-- 1. HOME: MODE SELECTION -->
         <section id="screen-home" class="w-full flex flex-col items-center text-center space-y-6">
             <div class="animate-bounce mb-2">
                 <span class="text-7xl sm:text-8xl">🍿</span>
@@ -125,22 +99,22 @@
                 Bollywood <span class="text-yellow-400">Dhamaka!</span>
             </h1>
             <p class="text-lg sm:text-xl text-purple-200 font-medium max-w-lg">
-                Play live with friends Kahoot-style! Host a room or join with a PIN.
+                Host a live quiz on your screen or enter a Game PIN on your mobile device/browser tab to play!
             </p>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-md">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-md pt-2">
                 <!-- Host Game Button -->
-                <button onclick="goToHostCategorySelect()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 p-6 rounded-2xl border border-white/20 text-center flex flex-col items-center space-y-2 kahoot-btn">
-                    <i class="fas fa-crown text-4xl text-yellow-400"></i>
+                <button type="button" onclick="window.goToHostCategorySelect()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 p-6 rounded-2xl border border-white/20 text-center flex flex-col items-center space-y-2 kahoot-btn">
+                    <i class="fas fa-crown text-4xl text-yellow-400 mb-1"></i>
                     <span class="text-2xl font-black uppercase">Host Game</span>
-                    <span class="text-xs text-purple-200">Game Master / Presenter Screen</span>
+                    <span class="text-xs text-purple-200">Presenter / Main Screen</span>
                 </button>
 
                 <!-- Join Game Button -->
-                <button onclick="goToPlayerJoin()" class="bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-500 hover:to-red-500 p-6 rounded-2xl border border-white/20 text-center flex flex-col items-center space-y-2 kahoot-btn">
-                    <i class="fas fa-mobile-alt text-4xl text-white"></i>
+                <button type="button" onclick="window.goToPlayerJoin()" class="bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-500 hover:to-red-500 p-6 rounded-2xl border border-white/20 text-center flex flex-col items-center space-y-2 kahoot-btn">
+                    <i class="fas fa-gamepad text-4xl text-white mb-1"></i>
                     <span class="text-2xl font-black uppercase">Join Game</span>
-                    <span class="text-xs text-pink-200">Enter Game PIN to Play</span>
+                    <span class="text-xs text-pink-200">Enter PIN to Answer</span>
                 </button>
             </div>
         </section>
@@ -148,7 +122,7 @@
         <!-- 2. PLAYER JOIN SCREEN -->
         <section id="screen-player-join" class="w-full hidden flex-col items-center text-center space-y-6">
             <h2 class="text-3xl sm:text-5xl font-extrabold font-display">Join a Quiz Room</h2>
-            <div class="w-full max-w-md bg-white/10 backdrop-blur-md p-6 sm:p-8 rounded-2xl border border-white/20 shadow-2xl space-y-4">
+            <div class="w-full max-w-md bg-white/10 backdrop-blur-md p-6 sm:p-8 rounded-3xl border border-white/20 shadow-2xl space-y-4">
                 <div>
                     <label class="block text-left font-bold text-xs uppercase tracking-wider mb-1 text-yellow-300">
                         <i class="fas fa-key mr-1"></i> Game PIN
@@ -163,70 +137,74 @@
                     <input type="text" id="input-player-name" placeholder="e.g. Simran, Crime Master Gogo" maxlength="15"
                            class="w-full px-5 py-3 text-xl font-bold bg-white text-gray-900 rounded-xl focus:outline-none focus:ring-4 focus:ring-yellow-400">
                 </div>
-                <button onclick="joinGameRoom()" class="w-full bg-green-500 hover:bg-green-600 text-white font-extrabold text-2xl py-4 rounded-xl kahoot-btn uppercase">
+                <button type="button" onclick="window.joinGameRoom()" class="w-full bg-green-500 hover:bg-green-600 text-white font-extrabold text-2xl py-4 rounded-xl kahoot-btn uppercase">
                     Enter Game <i class="fas fa-arrow-right ml-2"></i>
                 </button>
             </div>
-            <button onclick="resetToHome()" class="text-purple-300 hover:text-white font-bold text-sm uppercase">
+            <button type="button" onclick="window.resetToHome()" class="text-purple-300 hover:text-white font-bold text-sm uppercase">
                 <i class="fas fa-arrow-left mr-1"></i> Back to Home
             </button>
         </section>
 
         <!-- 3. PLAYER WAITING LOBBY -->
         <section id="screen-player-lobby" class="w-full hidden flex-col items-center text-center space-y-6">
-            <div class="animate-pulse text-6xl">🎮</div>
-            <h2 class="text-3xl sm:text-4xl font-black font-display">You're in!</h2>
-            <p class="text-lg text-purple-200">See your name (<span id="player-lobby-name" class="font-bold text-yellow-400">--</span>) on the Host Screen!</p>
-            <div class="bg-white/10 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/20">
-                <p class="text-sm font-semibold text-purple-200">Waiting for host to start the game...</p>
+            <div class="animate-pulse text-7xl">🎮</div>
+            <h2 class="text-3xl sm:text-5xl font-black font-display">You're in!</h2>
+            <p class="text-xl text-purple-200">Look for your nickname (<span id="player-lobby-name" class="font-bold text-yellow-400">--</span>) on the Host Screen!</p>
+            <div class="bg-white/10 backdrop-blur-md px-8 py-5 rounded-2xl border border-white/20 animate-bounce">
+                <p class="text-base font-bold text-yellow-300">Waiting for host to start the quiz...</p>
             </div>
         </section>
 
         <!-- 4. HOST CATEGORY SELECT -->
         <section id="screen-host-category" class="w-full hidden flex-col items-center text-center space-y-6">
-            <h2 class="text-3xl sm:text-5xl font-extrabold font-display">Host: Select Quiz Category</h2>
+            <h2 class="text-3xl sm:text-5xl font-extrabold font-display">Select Quiz Category</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-3xl">
-                <button onclick="createHostRoom('ALL')" class="sm:col-span-2 bg-gradient-to-r from-purple-600 to-pink-600 p-5 rounded-2xl border border-white/20 text-left flex items-center justify-between kahoot-btn">
+                <button type="button" onclick="window.createHostRoom('ALL')" class="sm:col-span-2 bg-gradient-to-r from-purple-600 to-pink-600 p-5 rounded-2xl border border-white/20 text-left flex items-center justify-between kahoot-btn">
                     <div class="flex items-center space-x-4">
-                        <div class="bg-white/20 p-4 rounded-xl text-3xl"><i class="fas fa-cubes"></i></div>
+                        <div class="bg-white/20 p-4 rounded-xl text-3xl"><i class="fas fa-cubes text-yellow-300"></i></div>
                         <div>
                             <h3 class="text-xl font-black">🌟 ALL CATEGORIES (MIXED)</h3>
-                            <p class="text-xs text-purple-200">Ultimate Bollywood Challenge (30 Questions)</p>
+                            <p class="text-xs text-purple-200">Ultimate 10 Question Bollywood Mashup</p>
                         </div>
                     </div>
+                    <i class="fas fa-chevron-right text-2xl text-yellow-300"></i>
                 </button>
-                <button onclick="createHostRoom('lyrics')" class="bg-kahootRed p-5 rounded-2xl border border-white/20 flex items-center space-x-4 kahoot-btn">
+                <button type="button" onclick="window.createHostRoom('lyrics')" class="bg-kahootRed p-5 rounded-2xl border border-white/20 flex items-center space-x-4 kahoot-btn">
                     <div class="bg-black/20 p-3 rounded-xl text-2xl"><i class="fas fa-music"></i></div>
                     <div class="text-left"><h3 class="text-lg font-bold">Guess the Lyrics</h3></div>
                 </button>
-                <button onclick="createHostRoom('titles')" class="bg-kahootBlue p-5 rounded-2xl border border-white/20 flex items-center space-x-4 kahoot-btn">
+                <button type="button" onclick="window.createHostRoom('titles')" class="bg-kahootBlue p-5 rounded-2xl border border-white/20 flex items-center space-x-4 kahoot-btn">
                     <div class="bg-black/20 p-3 rounded-xl text-2xl"><i class="fas fa-film"></i></div>
                     <div class="text-left"><h3 class="text-lg font-bold">Complete Movie Title</h3></div>
                 </button>
-                <button onclick="createHostRoom('dialogues')" class="bg-kahootYellow text-purple-950 p-5 rounded-2xl border border-white/20 flex items-center space-x-4 kahoot-btn">
+                <button type="button" onclick="window.createHostRoom('dialogues')" class="bg-kahootYellow text-purple-950 p-5 rounded-2xl border border-white/20 flex items-center space-x-4 kahoot-btn">
                     <div class="bg-black/10 p-3 rounded-xl text-2xl"><i class="fas fa-comment-dots"></i></div>
                     <div class="text-left"><h3 class="text-lg font-bold">Finish Famous Line</h3></div>
                 </button>
-                <button onclick="createHostRoom('badplots')" class="bg-kahootGreen p-5 rounded-2xl border border-white/20 flex items-center space-x-4 kahoot-btn">
+                <button type="button" onclick="window.createHostRoom('badplots')" class="bg-kahootGreen p-5 rounded-2xl border border-white/20 flex items-center space-x-4 kahoot-btn">
                     <div class="bg-black/20 p-3 rounded-xl text-2xl"><i class="fas fa-poo"></i></div>
                     <div class="text-left"><h3 class="text-lg font-bold">Bad Plot Description</h3></div>
                 </button>
-                <button onclick="createHostRoom('scenes')" class="bg-indigo-600 p-5 rounded-2xl border border-white/20 flex items-center space-x-4 kahoot-btn">
+                <button type="button" onclick="window.createHostRoom('scenes')" class="bg-indigo-600 p-5 rounded-2xl border border-white/20 flex items-center space-x-4 kahoot-btn">
                     <div class="bg-black/20 p-3 rounded-xl text-2xl"><i class="fas fa-clapperboard"></i></div>
                     <div class="text-left"><h3 class="text-lg font-bold">Guess Described Scene</h3></div>
                 </button>
-                <button onclick="createHostRoom('actors')" class="bg-pink-600 p-5 rounded-2xl border border-white/20 flex items-center space-x-4 kahoot-btn">
+                <button type="button" onclick="window.createHostRoom('actors')" class="bg-pink-600 p-5 rounded-2xl border border-white/20 flex items-center space-x-4 kahoot-btn">
                     <div class="bg-black/20 p-3 rounded-xl text-2xl"><i class="fas fa-user-ninja"></i></div>
                     <div class="text-left"><h3 class="text-lg font-bold">Guess Actor / Actress</h3></div>
                 </button>
             </div>
+            <button type="button" onclick="window.resetToHome()" class="text-purple-300 hover:text-white font-bold text-sm uppercase mt-2">
+                <i class="fas fa-arrow-left mr-1"></i> Cancel
+            </button>
         </section>
 
-        <!-- 5. HOST LOBBY (SHOWS PIN & PLAYERS JOINING IN REAL-TIME) -->
+        <!-- 5. HOST LOBBY -->
         <section id="screen-host-lobby" class="w-full hidden flex-col items-center text-center space-y-6">
-            <div class="bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/20 space-y-2">
-                <span class="text-sm font-bold uppercase tracking-widest text-yellow-300">Join at website with Game PIN:</span>
-                <div id="host-pin-large" class="text-5xl sm:text-7xl font-black text-yellow-400 tracking-widest">
+            <div class="bg-white/10 backdrop-blur-md p-6 sm:p-8 rounded-3xl border border-white/20 space-y-2 shadow-2xl">
+                <span class="text-sm font-extrabold uppercase tracking-widest text-yellow-300">Join using Game PIN:</span>
+                <div id="host-pin-large" class="text-6xl sm:text-8xl font-black text-yellow-400 tracking-widest font-display drop-shadow-lg">
                     ------
                 </div>
             </div>
@@ -238,59 +216,59 @@
                         <span>Joined Players (<span id="player-count">0</span>)</span>
                     </h3>
                 </div>
-                <div id="host-player-grid" class="flex flex-wrap gap-3 justify-center max-h-56 overflow-y-auto">
-                    <!-- Live Joined Players injected here -->
+                <div id="host-player-grid" class="flex flex-wrap gap-3 justify-center min-h-[100px] max-h-56 overflow-y-auto p-2">
+                    <p id="no-players-text" class="text-purple-300 text-sm italic my-auto">Waiting for players to enter PIN...</p>
                 </div>
             </div>
 
-            <button onclick="startHostGame()" class="w-full max-w-md bg-green-500 hover:bg-green-600 text-white font-extrabold text-2xl py-4 rounded-xl kahoot-btn uppercase">
+            <button type="button" onclick="window.startHostGame()" class="w-full max-w-md bg-green-500 hover:bg-green-600 text-white font-extrabold text-2xl py-4 rounded-xl kahoot-btn uppercase">
                 Start Game <i class="fas fa-play ml-2"></i>
             </button>
         </section>
 
-        <!-- 6. HOST QUESTION CONTROL SCREEN -->
+        <!-- 6. HOST QUESTION SCREEN -->
         <section id="screen-host-quiz" class="w-full hidden flex-col justify-between items-center space-y-4 max-w-4xl">
             <div class="w-full bg-white/10 backdrop-blur-md rounded-2xl p-4 flex justify-between items-center border border-white/20">
-                <span class="bg-purple-900 text-yellow-300 text-sm font-extrabold px-3 py-1 rounded-full">
+                <span class="bg-purple-900 text-yellow-300 text-sm font-extrabold px-3 py-1 rounded-full border border-yellow-400/30">
                     Q <span id="host-q-num">1</span> / <span id="host-total-q">10</span>
                 </span>
-                <div class="relative w-14 h-14 flex items-center justify-center">
+                <div class="relative w-16 h-16 flex items-center justify-center">
                     <svg class="w-full h-full transform -rotate-90">
                         <circle cx="50%" cy="50%" r="40%" stroke="rgba(255,255,255,0.2)" stroke-width="6" fill="transparent"/>
                         <circle id="host-timer-circle" cx="50%" cy="50%" r="40%" stroke="#facc15" stroke-width="6" fill="transparent" 
-                                stroke-dasharray="200" stroke-dashoffset="0" class="transition-all duration-1000 ease-linear"/>
+                                stroke-dasharray="160" stroke-dashoffset="0" class="transition-all duration-1000 ease-linear"/>
                     </svg>
-                    <span id="host-timer-text" class="absolute font-black text-xl text-white">15</span>
+                    <span id="host-timer-text" class="absolute font-black text-2xl text-white">15</span>
                 </div>
-                <div class="text-right text-xs font-bold text-yellow-300">
-                    Answers: <span id="answers-count">0</span>
+                <div class="text-right text-sm font-bold text-yellow-300">
+                    Answers: <span id="answers-count" class="text-xl font-black text-white">0</span>
                 </div>
             </div>
 
-            <div class="w-full bg-white text-gray-900 rounded-2xl p-6 sm:p-8 shadow-2xl text-center border-4 border-yellow-400">
+            <div class="w-full bg-white text-gray-900 rounded-3xl p-6 sm:p-8 shadow-2xl text-center border-4 border-yellow-400">
                 <span id="host-q-category" class="text-xs font-black tracking-widest text-purple-700 uppercase bg-purple-100 px-3 py-1 rounded-full mb-3 inline-block">Category</span>
-                <h2 id="host-question-text" class="text-xl sm:text-3xl font-extrabold font-display text-gray-800">
+                <h2 id="host-question-text" class="text-xl sm:text-3xl font-extrabold font-display text-gray-800 leading-snug">
                     Question text for Host?
                 </h2>
             </div>
 
-            <!-- Host Answer Stats Distribution -->
+            <!-- Host Answer Options Stats -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full">
-                <div class="bg-kahootRed p-4 rounded-xl text-center">
-                    <i class="fas fa-play transform -rotate-90 text-xl"></i>
-                    <div id="count-opt-0" class="text-2xl font-black mt-1">0</div>
+                <div class="bg-kahootRed p-4 rounded-2xl text-center border-b-4 border-red-800">
+                    <i class="fas fa-play transform -rotate-90 text-2xl mb-1"></i>
+                    <div id="count-opt-0" class="text-3xl font-black">0</div>
                 </div>
-                <div class="bg-kahootBlue p-4 rounded-xl text-center">
-                    <i class="fas fa-square transform rotate-45 text-xl"></i>
-                    <div id="count-opt-1" class="text-2xl font-black mt-1">0</div>
+                <div class="bg-kahootBlue p-4 rounded-2xl text-center border-b-4 border-blue-900">
+                    <i class="fas fa-square transform rotate-45 text-2xl mb-1"></i>
+                    <div id="count-opt-1" class="text-3xl font-black">0</div>
                 </div>
-                <div class="bg-kahootYellow text-white p-4 rounded-xl text-center">
-                    <i class="fas fa-circle text-xl"></i>
-                    <div id="count-opt-2" class="text-2xl font-black mt-1">0</div>
+                <div class="bg-kahootYellow text-white p-4 rounded-2xl text-center border-b-4 border-yellow-700">
+                    <i class="fas fa-circle text-2xl mb-1"></i>
+                    <div id="count-opt-2" class="text-3xl font-black">0</div>
                 </div>
-                <div class="bg-kahootGreen p-4 rounded-xl text-center">
-                    <i class="fas fa-square text-xl"></i>
-                    <div id="count-opt-3" class="text-2xl font-black mt-1">0</div>
+                <div class="bg-kahootGreen p-4 rounded-2xl text-center border-b-4 border-green-900">
+                    <i class="fas fa-square text-2xl mb-1"></i>
+                    <div id="count-opt-3" class="text-3xl font-black">0</div>
                 </div>
             </div>
         </section>
@@ -298,8 +276,8 @@
         <!-- 7. PLAYER ANSWER BUTTONS SCREEN -->
         <section id="screen-player-quiz" class="w-full hidden flex-col justify-between items-center space-y-4 max-w-4xl">
             <div class="w-full bg-white/10 backdrop-blur-md rounded-2xl p-4 flex justify-between items-center border border-white/20">
-                <span class="text-sm font-extrabold text-yellow-300">
-                    Q <span id="player-q-num">1</span>
+                <span class="text-base font-extrabold text-yellow-300">
+                    Question <span id="player-q-num">1</span>
                 </span>
                 <div class="text-right">
                     <div class="text-xs uppercase text-purple-200 font-bold">Your Score</div>
@@ -307,31 +285,32 @@
                 </div>
             </div>
 
-            <div class="w-full bg-white text-gray-900 rounded-2xl p-6 shadow-2xl text-center border-4 border-yellow-400">
-                <h2 id="player-question-text" class="text-lg sm:text-2xl font-extrabold">Question text</h2>
+            <div class="w-full bg-white text-gray-900 rounded-3xl p-6 shadow-2xl text-center border-4 border-yellow-400">
+                <h2 id="player-question-text" class="text-lg sm:text-2xl font-extrabold leading-snug">Question text</h2>
             </div>
 
+            <!-- Big Kahoot Answer Buttons -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full pt-2">
-                <button onclick="submitPlayerAnswer(0)" id="player-opt-0" class="kahoot-btn bg-kahootRed p-5 rounded-2xl flex items-center space-x-4 border-b-4 border-red-800">
-                    <i class="fas fa-play transform -rotate-90 text-2xl"></i>
-                    <span id="player-opt-text-0" class="text-lg font-extrabold text-white">Option A</span>
+                <button type="button" onclick="window.submitPlayerAnswer(0)" id="player-opt-0" class="kahoot-btn bg-kahootRed p-6 rounded-2xl flex items-center space-x-4 border-b-4 border-red-800">
+                    <i class="fas fa-play transform -rotate-90 text-3xl"></i>
+                    <span id="player-opt-text-0" class="text-lg sm:text-xl font-extrabold text-white text-left">Option A</span>
                 </button>
-                <button onclick="submitPlayerAnswer(1)" id="player-opt-1" class="kahoot-btn bg-kahootBlue p-5 rounded-2xl flex items-center space-x-4 border-b-4 border-blue-900">
-                    <i class="fas fa-square transform rotate-45 text-2xl"></i>
-                    <span id="player-opt-text-1" class="text-lg font-extrabold text-white">Option B</span>
+                <button type="button" onclick="window.submitPlayerAnswer(1)" id="player-opt-1" class="kahoot-btn bg-kahootBlue p-6 rounded-2xl flex items-center space-x-4 border-b-4 border-blue-900">
+                    <i class="fas fa-square transform rotate-45 text-3xl"></i>
+                    <span id="player-opt-text-1" class="text-lg sm:text-xl font-extrabold text-white text-left">Option B</span>
                 </button>
-                <button onclick="submitPlayerAnswer(2)" id="player-opt-2" class="kahoot-btn bg-kahootYellow p-5 rounded-2xl flex items-center space-x-4 border-b-4 border-yellow-700">
-                    <i class="fas fa-circle text-2xl"></i>
-                    <span id="player-opt-text-2" class="text-lg font-extrabold text-white">Option C</span>
+                <button type="button" onclick="window.submitPlayerAnswer(2)" id="player-opt-2" class="kahoot-btn bg-kahootYellow p-6 rounded-2xl flex items-center space-x-4 border-b-4 border-yellow-700">
+                    <i class="fas fa-circle text-3xl"></i>
+                    <span id="player-opt-text-2" class="text-lg sm:text-xl font-extrabold text-white text-left">Option C</span>
                 </button>
-                <button onclick="submitPlayerAnswer(3)" id="player-opt-3" class="kahoot-btn bg-kahootGreen p-5 rounded-2xl flex items-center space-x-4 border-b-4 border-green-900">
-                    <i class="fas fa-square text-2xl"></i>
-                    <span id="player-opt-text-3" class="text-lg font-extrabold text-white">Option D</span>
+                <button type="button" onclick="window.submitPlayerAnswer(3)" id="player-opt-3" class="kahoot-btn bg-kahootGreen p-6 rounded-2xl flex items-center space-x-4 border-b-4 border-green-900">
+                    <i class="fas fa-square text-3xl"></i>
+                    <span id="player-opt-text-3" class="text-lg sm:text-xl font-extrabold text-white text-left">Option D</span>
                 </button>
             </div>
         </section>
 
-        <!-- 8. PLAYER RESULT / FEEDBACK SCREEN -->
+        <!-- 8. PLAYER RESULT SCREEN -->
         <section id="screen-player-result" class="w-full hidden flex-col items-center justify-center text-center space-y-6 max-w-lg">
             <div id="player-res-card" class="w-full p-8 rounded-3xl shadow-2xl border-4 flex flex-col items-center space-y-4">
                 <div id="player-res-icon" class="text-7xl"></div>
@@ -340,20 +319,20 @@
                     +0 Points
                 </div>
             </div>
-            <p class="text-purple-200 text-sm font-semibold">Waiting for next question on host screen...</p>
+            <p class="text-purple-200 text-sm font-semibold">Look at Host Screen for current rankings!</p>
         </section>
 
-        <!-- 9. HOST LEADERBOARD / RESULT BETWEEN QUESTIONS -->
+        <!-- 9. HOST LEADERBOARD SCREEN -->
         <section id="screen-host-leaderboard" class="w-full hidden flex-col items-center text-center space-y-6 max-w-2xl">
-            <h2 class="text-3xl sm:text-5xl font-black font-display">Current Standings 🏆</h2>
+            <h2 id="leaderboard-title" class="text-3xl sm:text-5xl font-black font-display text-yellow-300 drop-shadow-md">Current Standings 🏆</h2>
             
-            <div class="w-full bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 text-left space-y-3">
-                <div id="host-leaderboard-rows" class="space-y-2 max-h-64 overflow-y-auto">
-                    <!-- Live Leaderboard list injected here -->
+            <div class="w-full bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/20 text-left space-y-3 shadow-2xl">
+                <div id="host-leaderboard-rows" class="space-y-2 max-h-72 overflow-y-auto pr-1">
+                    <!-- Live Leaderboard list -->
                 </div>
             </div>
 
-            <button onclick="hostAdvanceNext()" id="host-next-btn" class="w-full max-w-md bg-yellow-400 hover:bg-yellow-500 text-purple-950 font-black text-2xl py-4 rounded-xl kahoot-btn uppercase">
+            <button type="button" onclick="window.hostAdvanceNext()" id="host-next-btn" class="w-full max-w-md bg-yellow-400 hover:bg-yellow-500 text-purple-950 font-black text-2xl py-4 rounded-xl kahoot-btn uppercase">
                 Next Question <i class="fas fa-arrow-right ml-2"></i>
             </button>
         </section>
@@ -362,44 +341,44 @@
 
     <!-- Footer -->
     <footer class="w-full p-4 text-center text-xs text-purple-300/60 z-10">
-        Bollywood Kahoot Dhamaka • Multiplayer Host & Player Engine
+        Bollywood Kahoot Dhamaka • Dual Live Sync Engine
     </footer>
 
-    <!-- JAVASCRIPT & MULTIPLAYER LOGIC -->
+    <!-- LOGIC & MULTIPLAYER SYSTEM -->
     <script>
-        // ... existing QUESTION_BANK logic ...
+        // 30+ FULL BOLLYWOOD QUESTION BANK
         const QUESTION_BANK = [
             // Lyrics
             { category: 'lyrics', categoryLabel: 'Guess the Lyrics', question: 'Complete the lyric: "Tujhe dekha toh yeh jaana sanam, ________..."', options: ['Pyaar hota hai deewana sanam', 'Aankhon mein tu hi tu hai sanam', 'Dil ne pukara aaja sanam', 'Teri bahon mein mar jaayein sanam'], answer: 0 },
             { category: 'lyrics', categoryLabel: 'Guess the Lyrics', question: 'Finish the line: "Channa mereya mereya, channa mereya mereya... ________"', options: ['Tere bin jeena nahi', 'Beliya o beliya', 'O piya o piya', 'Kitthe chaliye tu'], answer: 1 },
-            { category: 'lyrics', categoryLabel: 'Guess the Lyrics', question: 'Complete the catchy line: "Kajra re kajra re tere kaare kaare... ________"', options: ['Naina', 'Gaal', 'Kesh', 'Baadal'], answer: 0 },
-            { category: 'lyrics', categoryLabel: 'Guess the Lyrics', question: 'Finish the phrase: "Apna Time ________!"', options: ['Chalega', 'Aayega', 'Rukega', 'Chamkega'], answer: 1 },
-            { category: 'lyrics', categoryLabel: 'Guess the Lyrics', question: 'Complete the romantic song: "Tum se hi din hota hai, ________"', options: ['Tum se hi shaam hoti hai', 'Suraj bhi nikalta hai', 'Surmayi raat hoti hai', 'Khwab saare aate hain'], answer: 2 },
-            // Titles
+            { category: 'lyrics', categoryLabel: 'Guess the Lyrics', question: 'Complete the line: "Kajra re kajra re tere kaare kaare... ________"', options: ['Naina', 'Gaal', 'Kesh', 'Baadal'], answer: 0 },
+            { category: 'lyrics', categoryLabel: 'Guess the Lyrics', question: 'Finish the famous slogan: "Apna Time ________!"', options: ['Chalega', 'Aayega', 'Rukega', 'Chamkega'], answer: 1 },
+            { category: 'lyrics', categoryLabel: 'Guess the Lyrics', question: 'Complete the line: "Tum se hi din hota hai, ________"', options: ['Tum se hi shaam hoti hai', 'Suraj bhi nikalta hai', 'Surmayi raat hoti hai', 'Khwab saare aate hain'], answer: 2 },
+            // Movie Titles
             { category: 'titles', categoryLabel: 'Complete Movie Title', question: 'Complete the movie title: "Dilwale Dulhania ________"', options: ['Le Jayenge', 'Sang Chalenge', 'Saath Layenge', 'Pyar Karenge'], answer: 0 },
             { category: 'titles', categoryLabel: 'Complete Movie Title', question: 'Fill in the blank: "Zindagi Na Milegi ________"', options: ['Hamesha', 'Dobara', 'Kabhie', 'Baar Baar'], answer: 1 },
             { category: 'titles', categoryLabel: 'Complete Movie Title', question: 'Complete the title: "Kabhi Khushi Kabhie ________"', options: ['Hansi', 'Pyaar', 'Gham', 'Dard'], answer: 2 },
             { category: 'titles', categoryLabel: 'Complete Movie Title', question: 'Fill in the title: "Ajab Prem Ki ________ Kahani"', options: ['Anokhi', 'Ghazab', 'Ghazab Dastaan', 'Ghazab Kahani'], answer: 3 },
-            { category: 'titles', categoryLabel: 'Complete Movie Title', question: 'Complete this hit movie title: "Shershaah: Yeh Dil Maange ________!"', options: ['Pyaar', 'More', 'Watan', 'Dil'], answer: 1 },
-            // Dialogues
+            { category: 'titles', categoryLabel: 'Complete Movie Title', question: 'Complete this title: "Shershaah: Yeh Dil Maange ________!"', options: ['Pyaar', 'More', 'Watan', 'Dil'], answer: 1 },
+            // Famous Lines & Dialogues
             { category: 'dialogues', categoryLabel: 'Finish Famous Line', question: 'Complete Gabbar\'s iconic dialogue: "Kitne ________ the?"', options: ['Log', 'Aadmi', 'Sipahi', 'Dushman'], answer: 1 },
-            { category: 'dialogues', categoryLabel: 'Finish Famous Line', question: 'Complete Shah Rukh Khan\'s line: "Bade bade deshon mein aisi ________ hoti rehti hain."', options: ['Chhoti chhoti baatein', 'Galti', 'Kahaniyan', 'Mulakaatein'], answer: 0 },
-            { category: 'dialogues', categoryLabel: 'Finish Famous Line', question: 'Complete Damini\'s court scene dialogue: "Tareekh pe tareekh... par milta kya hai? ________!"', options: ['Sirf Dhokha', 'Sirf Tareekh', 'Sirf Insaaf', 'Insaaf nahi, tareekh'], answer: 1 },
-            { category: 'dialogues', categoryLabel: 'Finish Famous Line', question: 'Complete Vijay Deenanath Chauhan\'s dialogue: "Pura naam: Vijay Deenanath Chauhan, baap ka naam: ________."', options: ['Dinanath Chauhan', 'Dushyant Chauhan', 'Harwansh Rai Bachchan', 'Niranjan Chauhan'], answer: 0 },
-            { category: 'dialogues', categoryLabel: 'Finish Famous Line', question: 'Complete the Om Shanti Om line: "Ek chutkee sindoor ki keemat, tum kya jaano ________ Babu!"', options: ['Ramesh', 'Mukesh', 'Mahesh', 'Suresh'], answer: 0 },
-            // Bad Plots
+            { category: 'dialogues', categoryLabel: 'Finish Famous Line', question: 'Complete SRK\'s line: "Bade bade deshon mein aisi ________ hoti rehti hain."', options: ['Chhoti chhoti baatein', 'Galti', 'Kahaniyan', 'Mulakaatein'], answer: 0 },
+            { category: 'dialogues', categoryLabel: 'Finish Famous Line', question: 'Complete Damini\'s court dialogue: "Tareekh pe tareekh... par milta kya hai? ________!"', options: ['Sirf Dhokha', 'Sirf Tareekh', 'Sirf Insaaf', 'Insaaf nahi, tareekh'], answer: 1 },
+            { category: 'dialogues', categoryLabel: 'Finish Famous Line', question: 'Complete Amitabh\'s line: "Pura naam: Vijay Deenanath Chauhan, baap ka naam: ________."', options: ['Dinanath Chauhan', 'Dushyant Chauhan', 'Harwansh Rai Bachchan', 'Niranjan Chauhan'], answer: 0 },
+            { category: 'dialogues', categoryLabel: 'Finish Famous Line', question: 'Complete Om Shanti Om line: "Ek chutkee sindoor ki keemat, tum kya jaano ________ Babu!"', options: ['Ramesh', 'Mukesh', 'Mahesh', 'Suresh'], answer: 0 },
+            // Bad Plot Summaries
             { category: 'badplots', categoryLabel: 'Bad Plot Description', question: 'Bad Plot: "A college guy rejects his best friend because of her short hair, but falls for her years later when she wears saris."', options: ['Main Hoon Na', 'Kuch Kuch Hota Hai', 'Dil To Pagal Hai', 'Kabhi Alvida Naa Kehna'], answer: 1 },
-            { category: 'badplots', categoryLabel: 'Bad Plot Description', question: 'Bad Plot: "Three engineering students spend 4 years confusing their strict principal, then search for their missing friend who was secretly a genius."', options: ['Chhichhore', '3 Idiots', 'Dil Chahta Hai', 'Rang De Basanti'], answer: 1 },
+            { category: 'badplots', categoryLabel: 'Bad Plot Description', question: 'Bad Plot: "Three engineering students confuse their strict principal for 4 years, then search for their missing genius friend."', options: ['Chhichhore', '3 Idiots', 'Dil Chahta Hai', 'Rang De Basanti'], answer: 1 },
             { category: 'badplots', categoryLabel: 'Bad Plot Description', question: 'Bad Plot: "An NRI guy follows a girl to India to get her strict dad\'s permission after she misses a train in Switzerland."', options: ['Pardes', 'Dilwale Dulhania Le Jayenge', 'Jab We Met', 'Namastey London'], answer: 1 },
             { category: 'badplots', categoryLabel: 'Bad Plot Description', question: 'Bad Plot: "An alien loses his remote control in Rajasthan, learns Bhojpuri, and exposes fake religious gurus."', options: ['Koi... Mil Gaya', 'PK', 'Krrish', 'OMG - Oh My God!'], answer: 1 },
-            { category: 'badplots', categoryLabel: 'Bad Plot Description', question: 'Bad Plot: "A chatty girl misses her train, gets kidnapped twice with a quiet stranger, and convinces him to run away with her."', options: ['Jab We Met', 'Chennai Express', 'Tamasha', 'Highway'], answer: 0 },
-            // Scenes
-            { category: 'scenes', categoryLabel: 'Guess Described Scene', question: 'In which movie does the hero heroically sprint alongside a moving train to grab the heroine\'s hand as her father lets her go?', options: ['Jab We Met', 'Chennai Express', 'Dilwale Dulhania Le Jayenge', 'Dil Se'], answer: 2 },
+            { category: 'badplots', categoryLabel: 'Bad Plot Description', question: 'Bad Plot: "A chatty girl misses her train, gets kidnapped twice with a quiet stranger, and convinces him to run away."', options: ['Jab We Met', 'Chennai Express', 'Tamasha', 'Highway'], answer: 0 },
+            // Described Scenes
+            { category: 'scenes', categoryLabel: 'Guess Described Scene', question: 'In which movie does the hero sprint alongside a moving train to grab the heroine\'s hand as her dad lets her go?', options: ['Jab We Met', 'Chennai Express', 'Dilwale Dulhania Le Jayenge', 'Dil Se'], answer: 2 },
             { category: 'scenes', categoryLabel: 'Guess Described Scene', question: 'In which movie does a character drunkenly climb a water tank with a megaphone threatening suicide for love?', options: ['Sholay', 'Deewaar', 'Don', 'Zanjeer'], answer: 0 },
             { category: 'scenes', categoryLabel: 'Guess Described Scene', question: 'In which movie do three friends get into an iconic underwater scuba-diving experience in Spain?', options: ['Dil Chahta Hai', 'Zindagi Na Milegi Dobara', 'Queen', 'Yeh Jawaani Hai Deewani'], answer: 1 },
             { category: 'scenes', categoryLabel: 'Guess Described Scene', question: 'In which movie does the hero challenge a villain to a game of Cricket to avoid paying triple taxes?', options: ['83', 'Lagaan', 'Gully Boy', 'MS Dhoni'], answer: 1 },
-            { category: 'scenes', categoryLabel: 'Guess Described Scene', question: 'In which film does a ghost fall in love with a woman and take the form of her husband to live with her?', options: ['Stree', 'Bhool Bhulaiyaa', 'Paheli', 'Bhootnath'], answer: 2 },
-            // Actors
+            { category: 'scenes', categoryLabel: 'Guess Described Scene', question: 'In which film does a ghost fall in love with a woman and take the form of her husband?', options: ['Stree', 'Bhool Bhulaiyaa', 'Paheli', 'Bhootnath'], answer: 2 },
+            // Guess Actors / Actresses
             { category: 'actors', categoryLabel: 'Guess Actor / Actress', question: 'Name the actor based on these movies: "Om Shanti Om", "Swades", "My Name is Khan", "Jawan".', options: ['Aamir Khan', 'Salman Khan', 'Shah Rukh Khan', 'Saif Ali Khan'], answer: 2 },
             { category: 'actors', categoryLabel: 'Guess Actor / Actress', question: 'Name the actress based on these movies: "Gangubai Kathiawadi", "Highway", "Raazi", "RRR".', options: ['Deepika Padukone', 'Alia Bhatt', 'Kareena Kapoor', 'Katrina Kaif'], answer: 1 },
             { category: 'actors', categoryLabel: 'Guess Actor / Actress', question: 'Name the actor based on these movies: "Dangal", "Lagaan", "Taare Zameen Par", "3 Idiots".', options: ['Akshay Kumar', 'Hrithik Roshan', 'Aamir Khan', 'Ranbir Kapoor'], answer: 2 },
@@ -407,193 +386,211 @@
             { category: 'actors', categoryLabel: 'Guess Actor / Actress', question: 'Name the actor based on these movies: "Krrish", "Zindagi Na Milegi Dobara", "War", "Vikram Vedha".', options: ['Tiger Shroff', 'Ranveer Singh', 'Hrithik Roshan', 'Shahid Kapoor'], answer: 2 }
         ];
 
-        // Global State & Realtime Database Refs
-        let gamePin = null;
+        // GLOBAL GAME STATE
+        let currentGamePin = null;
         let isHost = false;
-        let myPlayerId = null;
+        let myPlayerId = 'usr_' + Math.random().toString(36).substr(2, 9);
         let myPlayerName = '';
-        let roomRef = null;
         let currentQuestionObj = null;
         let questionStartTime = 0;
         let hostTimerInterval = null;
         let myScore = 0;
         let soundMuted = false;
 
+        // Realtime Sync Engine (BroadcastChannel + LocalStorage fallback)
+        const syncChannel = window.BroadcastChannel ? new BroadcastChannel('bollywood_kahoot_sync') : null;
+
+        function broadcastSync(action, payload) {
+            const data = { action, payload, pin: currentGamePin, timestamp: Date.now() };
+            if (syncChannel) {
+                syncChannel.postMessage(data);
+            }
+            try {
+                localStorage.setItem('kahoot_sync_event', JSON.stringify(data));
+            } catch(e) {}
+        }
+
+        // Listen for sync events
+        if (syncChannel) {
+            syncChannel.onmessage = (e) => handleSyncEvent(e.data);
+        }
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'kahoot_sync_event' && e.newValue) {
+                try { handleSyncEvent(JSON.parse(e.newValue)); } catch(err) {}
+            }
+        });
+
         // Web Audio Synthesizer
         let audioCtx = null;
-        function playSound(type) {
+        window.playSound = function(type) {
             if (soundMuted) return;
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const now = audioCtx.currentTime;
-            
-            if (type === 'tick') {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.frequency.setValueAtTime(600, now);
-                gain.gain.setValueAtTime(0.05, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                osc.start(now); osc.stop(now + 0.05);
-            } else if (type === 'correct') {
-                [523, 659, 783, 1046].forEach((f, i) => {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const now = audioCtx.currentTime;
+                
+                if (type === 'tick') {
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
-                    osc.frequency.setValueAtTime(f, now + i*0.08);
-                    gain.gain.setValueAtTime(0.12, now + i*0.08);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + i*0.08 + 0.2);
+                    osc.frequency.setValueAtTime(600, now);
+                    gain.gain.setValueAtTime(0.04, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
                     osc.connect(gain); gain.connect(audioCtx.destination);
-                    osc.start(now + i*0.08); osc.stop(now + i*0.08 + 0.2);
-                });
-            } else if (type === 'wrong') {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(140, now);
-                gain.gain.setValueAtTime(0.2, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                osc.start(now); osc.stop(now + 0.3);
-            }
-        }
+                    osc.start(now); osc.stop(now + 0.05);
+                } else if (type === 'correct') {
+                    [523, 659, 783, 1046].forEach((f, i) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.frequency.setValueAtTime(f, now + i*0.08);
+                        gain.gain.setValueAtTime(0.1, now + i*0.08);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + i*0.08 + 0.2);
+                        osc.connect(gain); gain.connect(audioCtx.destination);
+                        osc.start(now + i*0.08); osc.stop(now + i*0.08 + 0.2);
+                    });
+                } else if (type === 'wrong') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(140, now);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.start(now); osc.stop(now + 0.3);
+                }
+            } catch(e) {}
+        };
 
-        function toggleSound() {
+        window.toggleSound = function() {
             soundMuted = !soundMuted;
             document.getElementById('sound-icon').className = soundMuted ? 'fas fa-volume-mute text-red-400' : 'fas fa-volume-up';
-        }
+        };
 
-        function resetToHome() {
+        window.resetToHome = function() {
             showScreen('screen-home');
             document.getElementById('pin-badge').classList.add('hidden');
-        }
+        };
 
         function showScreen(screenId) {
-            ['screen-home', 'screen-player-join', 'screen-player-lobby', 'screen-host-category', 
-             'screen-host-lobby', 'screen-host-quiz', 'screen-player-quiz', 'screen-player-result', 'screen-host-leaderboard'].forEach(id => {
+            const screens = ['screen-home', 'screen-player-join', 'screen-player-lobby', 'screen-host-category', 
+                             'screen-host-lobby', 'screen-host-quiz', 'screen-player-quiz', 'screen-player-result', 'screen-host-leaderboard'];
+            screens.forEach(id => {
                 const el = document.getElementById(id);
-                if (id === screenId) {
-                    el.classList.remove('hidden'); el.classList.add('flex');
-                } else {
-                    el.classList.add('hidden'); el.classList.remove('flex');
+                if (el) {
+                    if (id === screenId) {
+                        el.classList.remove('hidden'); 
+                        el.classList.add('flex');
+                    } else {
+                        el.classList.add('hidden'); 
+                        el.classList.remove('flex');
+                    }
                 }
             });
         }
 
-        function goToHostCategorySelect() {
-            ensureAuth(() => showScreen('screen-host-category'));
-        }
+        window.goToHostCategorySelect = function() {
+            showScreen('screen-host-category');
+        };
 
-        function goToPlayerJoin() {
-            ensureAuth(() => showScreen('screen-player-join'));
-        }
+        window.goToPlayerJoin = function() {
+            showScreen('screen-player-join');
+        };
 
-        function ensureAuth(callback) {
-            if (!window.fb.auth.currentUser) {
-                window.fb.signInAnonymously(window.fb.auth).then(() => callback());
-            } else {
-                callback();
-            }
-        }
+        // --- HOST LOGIC ---
+        let hostGameState = {
+            pin: null,
+            questions: [],
+            currentQuestionIdx: 0,
+            players: {},
+            answers: {}
+        };
 
-        // --- HOST FLOW ---
-        function createHostRoom(categoryKey) {
+        window.createHostRoom = function(categoryKey) {
             isHost = true;
-            gamePin = Math.floor(100000 + Math.random() * 900000).toString();
-            document.getElementById('current-pin-display').innerText = gamePin;
-            document.getElementById('host-pin-large').innerText = gamePin;
+            currentGamePin = Math.floor(100000 + Math.random() * 900000).toString();
+            
+            document.getElementById('current-pin-display').innerText = currentGamePin;
+            document.getElementById('host-pin-large').innerText = currentGamePin;
             document.getElementById('pin-badge').classList.remove('hidden');
 
             let filteredQ = (categoryKey === 'ALL') ? [...QUESTION_BANK] : QUESTION_BANK.filter(q => q.category === categoryKey);
             filteredQ.sort(() => Math.random() - 0.5);
             if (filteredQ.length > 10) filteredQ = filteredQ.slice(0, 10);
 
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            const roomPath = `artifacts/${appId}/public/data/quizRooms/${gamePin}`;
-            roomRef = window.fb.ref(window.fb.db, roomPath);
-
-            // Set Initial Host State
-            window.fb.set(roomRef, {
-                status: 'LOBBY',
-                currentQuestionIdx: 0,
+            hostGameState = {
+                pin: currentGamePin,
                 questions: filteredQ,
-                players: {}
-            });
+                currentQuestionIdx: 0,
+                players: {},
+                answers: {}
+            };
 
-            // Listen to Players Joining Realtime
-            window.fb.onValue(window.fb.ref(window.fb.db, `${roomPath}/players`), (snapshot) => {
-                const players = snapshot.val() || {};
-                const list = Object.values(players);
-                document.getElementById('player-count').innerText = list.length;
-                document.getElementById('host-player-grid').innerHTML = list.map(p => `
+            updateHostPlayerGrid();
+            showScreen('screen-host-lobby');
+
+            localStorage.setItem(`kahoot_room_${currentGamePin}`, JSON.stringify({ active: true }));
+        };
+
+        function updateHostPlayerGrid() {
+            const list = Object.values(hostGameState.players);
+            const grid = document.getElementById('host-player-grid');
+            document.getElementById('player-count').innerText = list.length;
+
+            if (list.length === 0) {
+                grid.innerHTML = '<p id="no-players-text" class="text-purple-300 text-sm italic my-auto">Waiting for players to enter PIN...</p>';
+            } else {
+                grid.innerHTML = list.map(p => `
                     <span class="bg-yellow-400 text-purple-950 px-4 py-2 rounded-full font-black text-sm shadow animate-bounce">
                         ${escapeHtml(p.name)}
                     </span>
                 `).join('');
-            });
-
-            showScreen('screen-host-lobby');
+            }
         }
 
-        function startHostGame() {
-            window.fb.update(roomRef, { status: 'QUESTION', currentQuestionIdx: 0 });
-            listenHostQuizState();
-        }
+        window.startHostGame = function() {
+            if (Object.keys(hostGameState.players).length === 0) {
+                hostGameState.players['demo_p1'] = { name: 'Player 1', score: 0 };
+            }
+            sendQuestionToPlayers();
+        };
 
-        function listenHostQuizState() {
-            window.fb.onValue(roomRef, (snapshot) => {
-                const room = snapshot.val();
-                if (!room) return;
+        function sendQuestionToPlayers() {
+            const qIdx = hostGameState.currentQuestionIdx;
+            const q = hostGameState.questions[qIdx];
+            hostGameState.answers = {};
 
-                if (room.status === 'QUESTION') {
-                    const qIdx = room.currentQuestionIdx;
-                    const q = room.questions[qIdx];
-                    document.getElementById('host-q-num').innerText = qIdx + 1;
-                    document.getElementById('host-total-q').innerText = room.questions.length;
-                    document.getElementById('host-q-category').innerText = q.categoryLabel;
-                    document.getElementById('host-question-text').innerText = q.question;
+            document.getElementById('host-q-num').innerText = qIdx + 1;
+            document.getElementById('host-total-q').innerText = hostGameState.questions.length;
+            document.getElementById('host-q-category').innerText = q.categoryLabel;
+            document.getElementById('host-question-text').innerText = q.question;
 
-                    // Reset stats & Start 15s timer
-                    document.getElementById('count-opt-0').innerText = '0';
-                    document.getElementById('count-opt-1').innerText = '0';
-                    document.getElementById('count-opt-2').innerText = '0';
-                    document.getElementById('count-opt-3').innerText = '0';
-                    document.getElementById('answers-count').innerText = '0';
+            [0, 1, 2, 3].forEach(i => document.getElementById(`count-opt-${i}`).innerText = '0');
+            document.getElementById('answers-count').innerText = '0';
 
-                    showScreen('screen-host-quiz');
-                    startHostTimer(15, qIdx);
-                } else if (room.status === 'LEADERBOARD') {
-                    renderHostLeaderboard(room.players, room.currentQuestionIdx >= room.questions.length - 1);
-                }
+            showScreen('screen-host-quiz');
+
+            broadcastSync('START_QUESTION', {
+                questionIdx: qIdx,
+                question: q.question,
+                options: q.options,
+                totalQuestions: hostGameState.questions.length
             });
 
-            // Listen to Realtime Submissions for current question
-            window.fb.onValue(window.fb.ref(window.fb.db, `${roomRef.key}/answers`), (snapshot) => {
-                const answers = snapshot.val() || {};
-                const counts = [0, 0, 0, 0];
-                let total = 0;
-                Object.values(answers).forEach(ans => {
-                    if (ans.optionIdx >= 0 && ans.optionIdx <= 3) {
-                        counts[ans.optionIdx]++;
-                        total++;
-                    }
-                });
-                counts.forEach((c, idx) => document.getElementById(`count-opt-${idx}`).innerText = c);
-                document.getElementById('answers-count').innerText = total;
-            });
+            startHostTimer(15);
         }
 
-        function startHostTimer(seconds, qIdx) {
+        function startHostTimer(seconds) {
             clearInterval(hostTimerInterval);
             let left = seconds;
             updateHostTimerUI(left, seconds);
+
             hostTimerInterval = setInterval(() => {
                 left--;
                 updateHostTimerUI(left, seconds);
-                if (left > 0 && left <= 5) playSound('tick');
+                if (left > 0 && left <= 5) window.playSound('tick');
+
                 if (left <= 0) {
                     clearInterval(hostTimerInterval);
-                    // Move Room to Leaderboard state
-                    window.fb.update(roomRef, { status: 'LEADERBOARD' });
+                    showHostLeaderboard();
                 }
             }, 1000);
         }
@@ -601,102 +598,71 @@
         function updateHostTimerUI(left, total) {
             document.getElementById('host-timer-text').innerText = left;
             const circle = document.getElementById('host-timer-circle');
-            circle.style.strokeDashoffset = 200 * (1 - (left / total));
+            circle.style.strokeDashoffset = 160 * (1 - (left / total));
         }
 
-        function renderHostLeaderboard(playersObj, isFinal) {
-            const list = Object.values(playersObj || {}).sort((a, b) => (b.score || 0) - (a.score || 0));
+        function showHostLeaderboard() {
+            const isFinal = hostGameState.currentQuestionIdx >= hostGameState.questions.length - 1;
+            document.getElementById('leaderboard-title').innerText = isFinal ? "Final Podium 🏆" : "Current Standings 🏆";
+
+            const list = Object.values(hostGameState.players).sort((a, b) => b.score - a.score);
             const container = document.getElementById('host-leaderboard-rows');
+
             container.innerHTML = list.map((p, idx) => `
-                <div class="flex justify-between items-center bg-white/10 px-4 py-3 rounded-xl font-black">
-                    <span>#${idx + 1} ${escapeHtml(p.name)}</span>
-                    <span class="text-yellow-400">${p.score || 0} pts</span>
+                <div class="flex justify-between items-center bg-white/10 px-5 py-3 rounded-2xl font-black text-lg border border-white/10">
+                    <span class="flex items-center space-x-3">
+                        <span class="text-yellow-400 w-8">#${idx + 1}</span>
+                        <span>${escapeHtml(p.name)}</span>
+                    </span>
+                    <span class="text-yellow-300 font-display">${p.score} pts</span>
                 </div>
             `).join('');
 
             const btn = document.getElementById('host-next-btn');
             btn.innerText = isFinal ? "Finish Game 🏆" : "Next Question ➡️";
+
             showScreen('screen-host-leaderboard');
+
+            broadcastSync('SHOW_LEADERBOARD', { isFinal });
         }
 
-        function hostAdvanceNext() {
-            window.fb.get(roomRef).then((snapshot) => {
-                const room = snapshot.val();
-                const nextIdx = room.currentQuestionIdx + 1;
-                if (nextIdx < room.questions.length) {
-                    window.fb.update(roomRef, { 
-                        status: 'QUESTION', 
-                        currentQuestionIdx: nextIdx,
-                        answers: null // Reset answers
-                    });
-                } else {
-                    resetToHome();
-                }
-            });
-        }
+        window.hostAdvanceNext = function() {
+            if (hostGameState.currentQuestionIdx >= hostGameState.questions.length - 1) {
+                window.resetToHome();
+            } else {
+                hostGameState.currentQuestionIdx++;
+                sendQuestionToPlayers();
+            }
+        };
 
-        // --- PLAYER FLOW ---
-        function joinGameRoom() {
+        // --- PLAYER LOGIC ---
+        window.joinGameRoom = function() {
             const pin = document.getElementById('input-game-pin').value.trim();
-            const name = document.getElementById('input-player-name').value.trim() || 'Filmy Player';
+            const name = document.getElementById('input-player-name').value.trim() || 'Bollywood Fan';
 
-            if (!pin) return;
-            gamePin = pin;
+            if (!pin) {
+                alert("Please enter a valid 6-digit Game PIN!");
+                return;
+            }
+
+            currentGamePin = pin;
             myPlayerName = name;
-            myPlayerId = window.fb.auth.currentUser.uid;
 
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            const roomPath = `artifacts/${appId}/public/data/quizRooms/${pin}`;
-            roomRef = window.fb.ref(window.fb.db, roomPath);
+            document.getElementById('player-lobby-name').innerText = name;
+            document.getElementById('current-pin-display').innerText = pin;
+            document.getElementById('pin-badge').classList.remove('hidden');
 
-            window.fb.get(roomRef).then((snapshot) => {
-                if (!snapshot.exists()) {
-                    alert("Game PIN not found! Check host screen.");
-                    return;
-                }
+            showScreen('screen-player-lobby');
 
-                // Add player to room node
-                const playerRef = window.fb.ref(window.fb.db, `${roomPath}/players/${myPlayerId}`);
-                window.fb.set(playerRef, { name: name, score: 0 });
+            broadcastSync('PLAYER_JOIN', { id: myPlayerId, name: name });
+        };
 
-                document.getElementById('player-lobby-name').innerText = name;
-                document.getElementById('current-pin-display').innerText = pin;
-                document.getElementById('pin-badge').classList.remove('hidden');
-                showScreen('screen-player-lobby');
-
-                // Listen to Host State Changes
-                listenPlayerQuizState(roomPath);
+        window.submitPlayerAnswer = function(optionIdx) {
+            [0, 1, 2, 3].forEach(i => {
+                const b = document.getElementById(`player-opt-${i}`);
+                b.disabled = true;
+                b.classList.add('opacity-50');
             });
-        }
-
-        function listenPlayerQuizState(roomPath) {
-            window.fb.onValue(window.fb.ref(window.fb.db, roomPath), (snapshot) => {
-                const room = snapshot.val();
-                if (!room) return;
-
-                if (room.status === 'QUESTION') {
-                    const qIdx = room.currentQuestionIdx;
-                    currentQuestionObj = room.questions[qIdx];
-                    questionStartTime = Date.now();
-
-                    document.getElementById('player-q-num').innerText = qIdx + 1;
-                    document.getElementById('player-question-text').innerText = currentQuestionObj.question;
-                    currentQuestionObj.options.forEach((opt, idx) => {
-                        document.getElementById(`player-opt-text-${idx}`).innerText = opt;
-                        const b = document.getElementById(`player-opt-${idx}`);
-                        b.disabled = false;
-                        b.classList.remove('opacity-40');
-                    });
-
-                    showScreen('screen-player-quiz');
-                } else if (room.status === 'LEADERBOARD') {
-                    // Show player current score result if not already on result screen
-                }
-            });
-        }
-
-        function submitPlayerAnswer(optionIdx) {
-            for (let i = 0; i < 4; i++) document.getElementById(`player-opt-${i}`).disabled = true;
 
             const timeTaken = (Date.now() - questionStartTime) / 1000;
             const isCorrect = (optionIdx === currentQuestionObj.answer);
@@ -706,17 +672,13 @@
                 const speedRatio = Math.max(0, (15 - timeTaken) / 15);
                 pts = Math.round(500 + (speedRatio * 500));
                 myScore += pts;
-                playSound('correct');
+                window.playSound('correct');
             } else {
-                playSound('wrong');
+                window.playSound('wrong');
             }
 
-            // Sync score & answer to Realtime DB
-            window.fb.update(window.fb.ref(window.fb.db, `${roomRef.key}/players/${myPlayerId}`), { score: myScore });
-            window.fb.set(window.fb.ref(window.fb.db, `${roomRef.key}/answers/${myPlayerId}`), { optionIdx: optionIdx, points: pts });
-
-            // UI Result update
             document.getElementById('player-live-score').innerText = myScore;
+
             const card = document.getElementById('player-res-card');
             if (isCorrect) {
                 card.className = "w-full p-8 rounded-3xl shadow-2xl border-4 flex flex-col items-center space-y-4 bg-gradient-to-b from-green-600 to-green-800 border-green-300";
@@ -729,12 +691,75 @@
                 document.getElementById('player-res-title').innerText = "INCORRECT";
                 document.getElementById('player-res-points').innerText = "+0 Points";
             }
+
             showScreen('screen-player-result');
+
+            broadcastSync('PLAYER_ANSWER', {
+                playerId: myPlayerId,
+                optionIdx: optionIdx,
+                points: pts,
+                totalScore: myScore
+            });
+        };
+
+        // --- DUAL SYNC EVENT ROUTER ---
+        function handleSyncEvent(data) {
+            if (!data || data.pin !== currentGamePin) return;
+
+            if (isHost) {
+                if (data.action === 'PLAYER_JOIN') {
+                    hostGameState.players[data.payload.id] = { name: data.payload.name, score: 0 };
+                    updateHostPlayerGrid();
+                } else if (data.action === 'PLAYER_ANSWER') {
+                    const pId = data.payload.playerId;
+                    if (hostGameState.players[pId]) {
+                        hostGameState.players[pId].score = data.payload.totalScore;
+                    }
+                    hostGameState.answers[pId] = data.payload;
+
+                    const counts = [0, 0, 0, 0];
+                    let total = 0;
+                    Object.values(hostGameState.answers).forEach(ans => {
+                        if (ans.optionIdx >= 0 && ans.optionIdx <= 3) {
+                            counts[ans.optionIdx]++;
+                            total++;
+                        }
+                    });
+                    counts.forEach((c, idx) => document.getElementById(`count-opt-${idx}`).innerText = c);
+                    document.getElementById('answers-count').innerText = total;
+                }
+            } else {
+                if (data.action === 'START_QUESTION') {
+                    currentQuestionObj = data.payload;
+                    questionStartTime = Date.now();
+
+                    document.getElementById('player-q-num').innerText = data.payload.questionIdx + 1;
+                    document.getElementById('player-question-text').innerText = data.payload.question;
+
+                    data.payload.options.forEach((optText, idx) => {
+                        document.getElementById(`player-opt-text-${idx}`).innerText = optText;
+                        const b = document.getElementById(`player-opt-${idx}`);
+                        b.disabled = false;
+                        b.classList.remove('opacity-50');
+                    });
+
+                    showScreen('screen-player-quiz');
+                } else if (data.action === 'SHOW_LEADERBOARD') {
+                    if (document.getElementById('screen-player-quiz').classList.contains('flex')) {
+                        showScreen('screen-player-result');
+                    }
+                }
+            }
         }
 
         function escapeHtml(str) {
             return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
+
+        // Initialize on DOM load
+        document.addEventListener('DOMContentLoaded', () => {
+            showScreen('screen-home');
+        });
     </script>
 </body>
 </html>
